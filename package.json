@@ -12,18 +12,25 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.10.0",
     "@tailwindcss/vite": "^4.3.3",
+    "busboy": "^1.6.0",
     "lucide-react": "^1.30.0",
+    "pdf-parse": "^1.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@types/node": "^24.13.3",
+    "@types/pdf-parse": "^1.1.4",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
+    "@vercel/node": "^5.9.7",
     "@vitejs/plugin-react": "^6.0.4",
     "concurrently": "^10.0.4",
     "oxlint": "^1.75.0",
