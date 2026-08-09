@@ -40,7 +40,7 @@ ClauseGuard is an AI-powered contract analysis tool that helps ordinary users un
 | Node.js + Express | 4 |
 | TypeScript + ts-node-dev | — |
 | `@google/genai` SDK | ^1.10.0 |
-| Gemini model | `gemini-2.5-flash` |
+| Gemini model | `gemini-3.5-flash` |
 | pdf-parse | ^1.1.1 |
 | Zod | ^3.x |
 | multer | ^2.x |
