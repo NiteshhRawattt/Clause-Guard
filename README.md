@@ -30,30 +30,30 @@ ClauseGuard is an AI-powered contract analysis tool that helps ordinary users un
 
 ---
 
-## Tech Stack
+## 💻 Tech Stack
 
 ### Frontend
-| Tool | Version |
-|---|---|
-| React | 19 |
-| Vite | 8 |
-| TypeScript | 6 |
-| Tailwind CSS | 4 (via `@tailwindcss/vite`) |
-| React Router | 7 |
-| Lucide React | latest |
 
-### Backend
-| Tool | Version |
-|---|---|
-| Node.js + Express | 4 |
-| TypeScript + ts-node-dev | — |
-| `@google/genai` SDK | ^1.10.0 |
-| Gemini model | `gemini-3.5-flash` |
-| pdf-parse | ^1.1.1 |
-| Zod | ^3.x |
-| multer | ^2.x |
+<p>
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,tailwind" />
+</p>
 
----
+### Backend & AI
+
+<p>
+  <img src="https://skillicons.dev/icons?i=nodejs,express" />
+</p>
+
+- **Google Gemini API** — AI-powered contract analysis
+- **Zod** — response validation
+- **Multer** — PDF/file uploads
+- **pdf-parse** — PDF text extraction
+
+### Deployment & Development
+
+<p>
+  <img src="https://skillicons.dev/icons?i=vercel,git,github,vscode,npm" />
+</p>
 
 ## Getting Started
 
