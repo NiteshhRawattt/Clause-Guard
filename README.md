@@ -1,4 +1,4 @@
-# ClauseGuard
+<h1 align="center">ClauseGuard</h1>
 
 > **"Understand Before You Agree."**
 
