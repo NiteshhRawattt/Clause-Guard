@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import { Upload, FileText, X, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAnalysis } from '../../context/AnalysisContext';
+import { analyzeText, analyzePdf } from '../../services/api';
+import type { AnalysisResult } from '../../types';
 
 const USE_CASES = [
   'Employment Agreement',
@@ -22,6 +25,7 @@ export default function UploadArea({ loadSample = false }: UploadAreaProps) {
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { dispatch } = useAnalysis();
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -44,6 +48,16 @@ export default function UploadArea({ loadSample = false }: UploadAreaProps) {
   };
 
   const handleAnalyze = () => {
+    setError('');
+
+    // ── Sample mode: bypass API entirely ─────────────────────────────────────
+    if (loadSample) {
+      dispatch({ type: 'SET_MODE', payload: 'sample' });
+      navigate('/loading?sample=true');
+      return;
+    }
+
+    // ── Validation ────────────────────────────────────────────────────────────
     if (activeTab === 'upload' && !uploadedFile) {
       setError('Please upload a PDF or switch to the paste tab.');
       return;
@@ -52,7 +66,25 @@ export default function UploadArea({ loadSample = false }: UploadAreaProps) {
       setError('Please paste your contract text before analyzing.');
       return;
     }
-    setError('');
+    if (activeTab === 'paste' && pastedText.trim().length < 100) {
+      setError('Please paste more text — at least a few sentences are needed for analysis.');
+      return;
+    }
+
+    // ── Build and store the API promise ───────────────────────────────────────
+    let apiPromise: Promise<AnalysisResult>;
+
+    if (activeTab === 'paste') {
+      apiPromise = analyzeText(
+        pastedText.trim(),
+        'Contract Analysis'
+      );
+    } else {
+      apiPromise = analyzePdf(uploadedFile!, uploadedFile!.name);
+    }
+
+    dispatch({ type: 'SET_MODE', payload: 'real' });
+    dispatch({ type: 'SET_PENDING', payload: apiPromise });
     navigate('/loading');
   };
 
@@ -152,7 +184,7 @@ export default function UploadArea({ loadSample = false }: UploadAreaProps) {
                 color: '#64748b',
                 border: '1px solid rgba(71, 85, 105, 0.3)',
               }}>
-                PDF files supported
+                PDF files only · max 10 MB
               </span>
             </div>
           )}

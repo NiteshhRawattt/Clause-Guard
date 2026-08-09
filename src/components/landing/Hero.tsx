@@ -102,8 +102,8 @@ export default function Hero() {
           <div className="mt-16 grid grid-cols-3 gap-4 max-w-xl mx-auto animate-fade-in delay-400">
             {[
               { value: '6+', label: 'Clause Types' },
-              { value: '< 2s', label: 'Analysis Time' },
-              { value: '100%', label: 'Private & Local' },
+              { value: 'AI', label: 'AI-Powered Analysis' },
+              { value: '🔒', label: 'Secure API Processing' },
             ].map((stat) => (
               <div key={stat.label} className="glass-card-light p-4 text-center">
                 <div className="font-bold text-xl mb-1" style={{ color: '#e07520' }}>{stat.value}</div>

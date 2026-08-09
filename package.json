@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "npm --prefix server run dev",
+    "dev:all": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,yellow\" \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -23,6 +25,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "concurrently": "^10.0.4",
     "oxlint": "^1.75.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"

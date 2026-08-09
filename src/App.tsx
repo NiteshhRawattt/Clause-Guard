@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AnalysisProvider } from './context/AnalysisContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import LandingPage from './pages/LandingPage';
@@ -11,18 +12,20 @@ import AboutPage from './pages/AboutPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/analyze" element={<AnalyzePage />} />
-          <Route path="/loading" element={<LoadingPage />} />
-          <Route path="/results" element={<ResultsPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/about" element={<AboutPage />} />
-        </Routes>
-        <Footer />
-      </div>
+      <AnalysisProvider>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/analyze" element={<AnalyzePage />} />
+            <Route path="/loading" element={<LoadingPage />} />
+            <Route path="/results" element={<ResultsPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/about" element={<AboutPage />} />
+          </Routes>
+          <Footer />
+        </div>
+      </AnalysisProvider>
     </BrowserRouter>
   );
 }

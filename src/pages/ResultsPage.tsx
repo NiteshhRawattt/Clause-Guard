@@ -1,5 +1,6 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Printer } from 'lucide-react';
+import { useAnalysis } from '../context/AnalysisContext';
 import { mockAnalysisResult } from '../data/mockAnalysis';
 import ScoreHeader from '../components/results/ScoreHeader';
 import CategoryOverview from '../components/results/CategoryOverview';
@@ -9,7 +10,20 @@ import UnclearAreas from '../components/results/UnclearAreas';
 
 export default function ResultsPage() {
   const navigate = useNavigate();
-  const result = mockAnalysisResult;
+  const [searchParams] = useSearchParams();
+  const { state } = useAnalysis();
+
+  // Determine which result to show:
+  // - ?sample=true → always use mock (guaranteed demo)
+  // - mode === 'sample' → use mock
+  // - otherwise → use real result from context (or fall back to mock if missing)
+  const isSample =
+    searchParams.get('sample') === 'true' || state.mode === 'sample';
+  const result = isSample ? mockAnalysisResult : (state.result ?? mockAnalysisResult);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8">
@@ -20,11 +34,22 @@ export default function ResultsPage() {
             <ArrowLeft size={15} />
             New Analysis
           </button>
-          <button className="btn-ghost text-sm" onClick={() => alert('Export feature coming soon!')}>
-            <Download size={15} />
-            Export PDF
+          <button className="btn-ghost text-sm" onClick={handlePrint}>
+            <Printer size={15} />
+            Print / Save PDF
           </button>
         </div>
+
+        {/* Sample badge */}
+        {isSample && (
+          <div className="mb-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium animate-fade-in" style={{
+            background: 'rgba(167, 139, 250, 0.1)',
+            border: '1px solid rgba(167, 139, 250, 0.25)',
+            color: '#a78bfa',
+          }}>
+            ⚡ Sample analysis — paste your own contract on the Analyze page for a real result
+          </div>
+        )}
 
         {/* Score Header */}
         <ScoreHeader result={result} />

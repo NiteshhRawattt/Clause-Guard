@@ -1,49 +1,165 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Loader } from 'lucide-react';
+import { CheckCircle, Loader, AlertCircle, RefreshCw, FileSearch } from 'lucide-react';
+import { useAnalysis } from '../../context/AnalysisContext';
 import { analysisSteps } from '../../data/mockAnalysis';
+import { saveToHistory } from '../../utils/historyStorage';
 
-export default function AnalysisProgress() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+type StepState = 'pending' | 'active' | 'complete';
+
+interface AnalysisProgressProps {
+  isSample?: boolean;
+}
+
+export default function AnalysisProgress({ isSample = false }: AnalysisProgressProps) {
+
+  const [stepStates, setStepStates] = useState<StepState[]>(
+    analysisSteps.map(() => 'pending')
+  );
   const [progress, setProgress] = useState(0);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const navigate = useNavigate();
+  const { state, dispatch } = useAnalysis();
+
+  // Guard: if we arrive at /loading without a pending request and it's not sample mode,
+  // redirect back to analyze
+  useEffect(() => {
+    if (!isSample && !state.pendingRequest) {
+      navigate('/analyze', { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Step animation (runs for both modes) ───────────────────────────────────
+  const animationDoneRef = useRef(false);
 
   useEffect(() => {
     let stepIndex = 0;
     let elapsed = 0;
     const total = analysisSteps.reduce((s, step) => s + step.duration, 0) + 400;
 
-    const runStep = () => {
-      if (stepIndex >= analysisSteps.length) {
-        setTimeout(() => navigate('/results'), 400);
-        return;
-      }
+    const advance = () => {
+      if (stepIndex >= analysisSteps.length) return;
 
-      setCurrentStep(stepIndex);
+      setStepStates(prev => {
+        const next = [...prev];
+        next[stepIndex] = 'active';
+        return next;
+      });
+
       const duration = analysisSteps[stepIndex].duration;
-
-      // progress bar ticks
       const tickInterval = 50;
       let ticked = 0;
+
       const ticker = setInterval(() => {
         ticked += tickInterval;
         elapsed += tickInterval;
-        setProgress(Math.min((elapsed / total) * 100, 95));
+        setProgress(Math.min((elapsed / total) * 100, isSample ? 95 : 80));
         if (ticked >= duration) clearInterval(ticker);
       }, tickInterval);
 
       setTimeout(() => {
-        setCompletedSteps(prev => [...prev, stepIndex]);
+        setStepStates(prev => {
+          const next = [...prev];
+          next[stepIndex] = 'complete';
+          return next;
+        });
         stepIndex++;
-        runStep();
+        if (stepIndex < analysisSteps.length) {
+          advance();
+        } else {
+          animationDoneRef.current = true;
+        }
       }, duration);
     };
 
-    const startTimer = setTimeout(runStep, 200);
+    const startTimer = setTimeout(advance, 200);
     return () => clearTimeout(startTimer);
-  }, [navigate]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Sample mode: navigate after animation completes ────────────────────────
+  useEffect(() => {
+    if (!isSample) return;
+
+    const totalDuration = analysisSteps.reduce((s, step) => s + step.duration, 0) + 800;
+    const timer = setTimeout(() => {
+      dispatch({ type: 'SET_MODE', payload: 'sample' });
+      setProgress(100);
+      setTimeout(() => navigate('/results', { replace: true }), 300);
+    }, totalDuration);
+
+    return () => clearTimeout(timer);
+  }, [isSample, navigate, dispatch]);
+
+  // ── Real mode: await the API promise ───────────────────────────────────────
+  useEffect(() => {
+    if (isSample || !state.pendingRequest) return;
+
+    state.pendingRequest
+      .then((result) => {
+        // Save to history
+        try { saveToHistory(result); } catch { /* ignore */ }
+
+        dispatch({ type: 'SET_RESULT', payload: result });
+        setProgress(100);
+        setTimeout(() => navigate('/results', { replace: true }), 400);
+      })
+      .catch((err: Error) => {
+        const message =
+          err.message || 'Analysis failed. Please try again.';
+        setApiError(message);
+        dispatch({ type: 'SET_ERROR', payload: message });
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Error state ────────────────────────────────────────────────────────────
+  if (apiError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="glass-card p-10 max-w-md w-full text-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+          }}>
+            <AlertCircle size={32} style={{ color: '#f87171' }} />
+          </div>
+          <h2 className="font-bold text-xl mb-3" style={{ color: '#f1f5f9' }}>
+            Analysis Failed
+          </h2>
+          <p className="text-sm mb-8 leading-relaxed" style={{
+            color: '#94a3b8',
+            background: 'rgba(239, 68, 68, 0.06)',
+            border: '1px solid rgba(239, 68, 68, 0.15)',
+            borderRadius: '10px',
+            padding: '12px 16px',
+          }}>
+            {apiError}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              className="btn-primary text-sm"
+              onClick={() => navigate('/analyze')}
+            >
+              <RefreshCw size={15} />
+              Try Again
+            </button>
+            <button
+              className="btn-secondary text-sm"
+              onClick={() => {
+                dispatch({ type: 'SET_MODE', payload: 'sample' });
+                navigate('/results?sample=true');
+              }}
+            >
+              <FileSearch size={15} />
+              View Sample Instead
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal loading UI ──────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{
       background: 'radial-gradient(ellipse at center, rgba(224, 117, 32, 0.05) 0%, transparent 70%)',
@@ -51,12 +167,10 @@ export default function AnalysisProgress() {
       <div className="glass-card p-10 max-w-md w-full text-center">
         {/* Animated icon */}
         <div className="relative mx-auto mb-8" style={{ width: 80, height: 80 }}>
-          {/* Outer ring */}
           <div className="absolute inset-0 rounded-full animate-spin-slow" style={{
             background: 'conic-gradient(from 0deg, #e07520, transparent 60%)',
             opacity: 0.4,
           }} />
-          {/* Inner circle */}
           <div className="absolute inset-2 rounded-full flex items-center justify-center" style={{
             background: 'rgba(224, 117, 32, 0.1)',
             border: '1px solid rgba(224, 117, 32, 0.25)',
@@ -69,14 +183,17 @@ export default function AnalysisProgress() {
           Analyzing Agreement
         </h2>
         <p className="text-sm mb-8" style={{ color: '#64748b' }}>
-          Reading your contract and identifying key clauses…
+          {isSample
+            ? 'Loading sample analysis…'
+            : 'Reading your contract and identifying key clauses…'}
         </p>
 
         {/* Steps */}
         <div className="flex flex-col gap-3 mb-8 text-left">
           {analysisSteps.map((step, idx) => {
-            const isComplete = completedSteps.includes(idx);
-            const isActive = currentStep === idx && !isComplete;
+            const s = stepStates[idx];
+            const isComplete = s === 'complete';
+            const isActive = s === 'active';
             return (
               <div
                 key={step.id}
@@ -100,11 +217,8 @@ export default function AnalysisProgress() {
                   <Loader size={18} style={{ color: '#e07520', flexShrink: 0 }} className="animate-spin" />
                 ) : (
                   <div style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
-                    border: '2px solid rgba(71, 85, 105, 0.5)',
-                    flexShrink: 0,
+                    width: 18, height: 18, borderRadius: '50%',
+                    border: '2px solid rgba(71, 85, 105, 0.5)', flexShrink: 0,
                   }} />
                 )}
                 <span className="text-sm font-medium" style={{
