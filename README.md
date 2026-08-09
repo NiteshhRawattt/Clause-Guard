@@ -1,5 +1,11 @@
 # ClauseGuard
 
+<p align="center">
+  <a href="https://clause-guard-two.vercel.app/">
+    <strong>🚀 Live Demo</strong>
+  </a>
+</p>
+
 > **"Understand Before You Agree."**
 
 ClauseGuard is an AI-powered contract analysis tool that helps ordinary users understand agreements before signing. It identifies clauses that deserve attention, explains them in plain language, and suggests questions worth asking — powered by Google Gemini 2.5 Flash.
